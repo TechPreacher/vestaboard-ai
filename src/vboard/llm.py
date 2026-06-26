@@ -3,8 +3,6 @@ import httpx
 from vboard import logging_setup
 from vboard.config import LLMConfig
 
-log = logging_setup.get_logger("vboard.llm")
-
 SYSTEM_PROMPT = (
     "You write messages for a Vestaboard split-flap display. "
     "Output ONLY the message text. It must fit on 3 lines of at most 15 "

@@ -38,7 +38,7 @@ class Daemon:
                 continue
             self.scheduler.add_job(
                 self._fire, trigger=cron_to_trigger(prompt.cron),
-                args=[prompt.id], id=prompt.id, replace_existing=True,
+                args=[prompt.id], id=prompt.id,
             )
         self._last_mtime = self._mtime()
         log.info("synced %d job(s)", len(self.scheduler.get_jobs()))

@@ -6,8 +6,6 @@ import httpx
 from vboard import logging_setup
 from vboard.config import VestaboardConfig
 
-log = logging_setup.get_logger("vboard.delivery")
-
 CLOUD_RW_URL = "https://rw.vestaboard.com/"
 
 

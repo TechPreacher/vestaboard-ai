@@ -78,3 +78,16 @@ def test_llm_error_reported_not_raised():
     r = pipeline.run_once(CFG, PROMPT, generate=gen, deliver_factory=lambda v, client=None: board)
     assert r.delivered is False
     assert "no key" in r.error
+
+
+def test_local_backend_not_implemented_reported():
+    cfg = AppConfig(
+        vestaboard=VestaboardConfig(
+            backend="local", local_endpoint="http://x", local_key="k"
+        )
+    )
+    prompt = PromptEntry(id="1", text="weather", cron="* * * * *")
+    r = pipeline.run_once(cfg, prompt, generate=lambda c, p, shorter=False: "RAIN TODAY")
+    # uses the real make_delivery -> LocalAPI -> NotImplementedError
+    assert r.delivered is False
+    assert "local" in r.error.lower()

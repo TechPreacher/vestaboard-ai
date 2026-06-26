@@ -7,6 +7,10 @@ import streamlit as st
 from vboard import config as cfgmod
 from vboard.ui import pages_config, pages_preview
 
+# WARNING: _check_password() is the SOLE authentication gate for this entire app.
+# Do NOT add a Streamlit pages/ directory — it would route around this gate and
+# break security. Add new pages through the main() router instead.
+
 CONFIG_PATH = Path(os.environ.get("VBOARD_CONFIG", "config.json"))
 
 
