@@ -11,17 +11,15 @@ def register_secret(value: str) -> None:
 
 class _RedactionFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        if record.args:
-            record.args = tuple(self._scrub(a) for a in record.args)
-        record.msg = self._scrub(record.msg)
+        message = record.getMessage()  # applies record.args to record.msg
+        record.msg = self._scrub(message)
+        record.args = None
         return True
 
     @staticmethod
-    def _scrub(value: object) -> object:
-        if not isinstance(value, str):
-            return value
+    def _scrub(value: str) -> str:
         out = value
-        for secret in _SECRETS:
+        for secret in tuple(_SECRETS):   # snapshot: safe under concurrent register_secret
             if secret:
                 out = out.replace(secret, "***")
         return out
