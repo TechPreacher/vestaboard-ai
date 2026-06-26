@@ -4,9 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-**Greenfield.** No application code exists yet — only this file and `.claude/` scaffolding. The
-sections below describe the *intended* architecture from the project spec. As code lands, replace
-the recommendations here with what was actually built (real commands, real module names).
+Complete. Modules exist under `src/vboard/` (config, charset, vbml, llm, delivery, pipeline, daemon, ui); scheduler and UI are separate systemd services sharing a single config file; deploy artifacts (systemd units, container images) live in `deploy/`.
 
 ## What this is
 
@@ -58,9 +56,11 @@ Keep these as separable modules so backends/providers are swappable and testable
 
 ## Commands
 
-Not yet established — no code. When the project is set up, record the real ones here. Likely shape
-(Python): `streamlit run <app>.py` to launch the UI; `pytest` to test; a linter (ruff/flake8).
-Don't invent commands that don't run — verify before writing them down.
+- Install deps: `uv sync`
+- Run tests: `uv run pytest`
+- Lint: `uv run ruff check .`
+- Run UI locally: `VBOARD_CONFIG=./config.json uv run streamlit run src/vboard/ui/app.py`
+- Run scheduler daemon: `VBOARD_CONFIG=./config.json uv run python -m vboard.daemon`
 
 ## Verification
 
