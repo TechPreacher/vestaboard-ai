@@ -71,6 +71,10 @@ def compile(text: str, color_hints_enabled: bool) -> CompileResult:  # noqa: A00
     if len(lines) > NOTE_LINES:
         return CompileResult("", _blank_grid(), clen, False,
                              f"requires {len(lines)} lines, max {NOTE_LINES}")
+    for line in lines:
+        if len(line) > NOTE_COLS:
+            return CompileResult("", _blank_grid(), clen, False,
+                                 f"line exceeds {NOTE_COLS} chars: {line!r}")
 
     grid = _blank_grid()
     col_offset = (COLS - NOTE_COLS) // 2  # center 15 within 22
@@ -104,15 +108,23 @@ def _chip_rows(text: str) -> list[int | None]:
 
 
 def truncate_to_fit(text: str) -> str:
+    """Word-boundary truncate to fit 45 chars / 3 lines of <=15.
+
+    Strips {color} hints; returns plain content only (last-resort path).
+    """
     plain = strip_hints(text)
     words = plain.split()
     out_words: list[str] = []
     for w in words:
+        if len(w) > NOTE_COLS:
+            break
         candidate = out_words + [w]
         joined = " ".join(candidate)
         if content_length(joined) > CONTENT_LIMIT:
             break
         if len(_split_lines(joined)) > NOTE_LINES:
+            break
+        if any(len(line) > NOTE_COLS for line in _split_lines(joined)):
             break
         out_words = candidate
     return " ".join(out_words)

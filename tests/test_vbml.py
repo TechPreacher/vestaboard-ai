@@ -49,3 +49,21 @@ def test_color_hints_disabled_strips_tokens_no_chip():
     r = vbml.compile("{red}HI", color_hints_enabled=False)
     flat = [c for row in r.grid for c in row]
     assert vbml.COLOR_RED not in flat
+
+
+def test_compile_single_long_word_is_invalid():
+    r = vbml.compile("ABCDEFGHIJKLMNOP", color_hints_enabled=False)  # 16 chars, one word
+    assert r.valid is False
+    assert "15" in r.reason
+
+
+def test_truncate_drops_unrenderable_long_word():
+    # a 20-char single word cannot be placed; truncate must yield compile-valid output
+    out = vbml.truncate_to_fit("ABCDEFGHIJKLMNOPQRST and more text here")
+    assert vbml.compile(out, color_hints_enabled=False).valid is True
+
+
+def test_truncate_output_always_compiles_valid():
+    text = "ALPHA BRAVO CHARLIE DELTA ECHO FOXTROT GOLF HOTEL INDIA JULIET KILO"
+    out = vbml.truncate_to_fit(text)
+    assert vbml.compile(out, color_hints_enabled=False).valid is True
