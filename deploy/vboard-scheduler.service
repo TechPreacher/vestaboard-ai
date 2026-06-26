@@ -1,0 +1,21 @@
+[Unit]
+Description=Vestaboard AI scheduler daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vboard
+Group=vboard
+WorkingDirectory=/opt/vboard
+Environment=VBOARD_CONFIG=/opt/vboard/config.json
+ExecStart=/opt/vboard/.venv/bin/python -m vboard.daemon
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/vboard
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
