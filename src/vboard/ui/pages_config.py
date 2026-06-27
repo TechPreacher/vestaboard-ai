@@ -46,8 +46,11 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
     st.header("Prompts & Schedules")
 
     for i, p in enumerate(cfg.prompts):
-        summary = p.text if len(p.text) <= 120 else p.text[:120] + "…"
+        summary = p.display_title if len(p.display_title) <= 120 else p.display_title[:120] + "…"
         with st.expander(f"{p.id}: {summary}"):
+            p.title = st.text_input(
+                "Title (shown in lists; defaults to the prompt text)",
+                value=p.title, key=f"title_{i}")
             p.text = st.text_area("Prompt", value=p.text, key=f"text_{i}")
             p.cron = st.text_input("Cron (m h dom mon dow)", value=p.cron, key=f"cron_{i}")
             p.color_hints_enabled = st.checkbox("Color hints", value=p.color_hints_enabled,
@@ -60,11 +63,13 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
 
     st.subheader("Add prompt")
     new_id = st.text_input("ID", key="new_id")
+    new_title = st.text_input("Title (optional)", key="new_title")
     new_text = st.text_area("Prompt text", key="new_text")
     new_cron = st.text_input("Cron", value="0 8 * * *", key="new_cron")
     if st.button("Add"):
         if new_id and new_text:
-            cfg.prompts.append(cfgmod.PromptEntry(id=new_id, text=new_text, cron=new_cron))
+            cfg.prompts.append(
+                cfgmod.PromptEntry(id=new_id, title=new_title, text=new_text, cron=new_cron))
             cfgmod.save_config(cfg, path)
             st.rerun()
 

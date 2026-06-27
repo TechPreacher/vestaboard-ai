@@ -14,8 +14,9 @@ def render_preview(cfg: cfgmod.AppConfig, path: Path) -> None:
         return
 
     def _label(p: cfgmod.PromptEntry) -> str:
-        text = p.text if len(p.text) <= 120 else p.text[:120] + "…"
-        return f"{p.id}: {text}"
+        title = p.display_title
+        title = title if len(title) <= 120 else title[:120] + "…"
+        return f"{p.id}: {title}"
 
     labels = [_label(p) for p in cfg.prompts]
     idx = st.selectbox("Prompt", range(len(cfg.prompts)), format_func=lambda i: labels[i])
