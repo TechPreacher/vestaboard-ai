@@ -45,6 +45,10 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
 def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
     st.header("Prompts & Schedules")
 
+    # Snapshot so inline edits (title/text/cron/checkboxes) can be auto-saved:
+    # app.py reloads cfg from disk on every rerun, so unsaved edits would be lost.
+    before = cfg.model_dump_json()
+
     for i, p in enumerate(cfg.prompts):
         summary = p.display_title if len(p.display_title) <= 120 else p.display_title[:120] + "…"
         with st.expander(f"{p.id}: {summary}"):
@@ -61,6 +65,12 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
                 cfgmod.save_config(cfg, path)
                 st.rerun()
 
+    # Persist inline edits as soon as a field changes (e.g. pressing Enter in a
+    # title/cron field), then rerun so the list labels reflect the new values.
+    if cfg.model_dump_json() != before:
+        cfgmod.save_config(cfg, path)
+        st.rerun()
+
     st.subheader("Add prompt")
     new_id = st.text_input("ID", key="new_id")
     new_title = st.text_input("Title (optional)", key="new_title")
@@ -73,6 +83,4 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
             cfgmod.save_config(cfg, path)
             st.rerun()
 
-    if st.button("Save all"):
-        cfgmod.save_config(cfg, path)
-        st.success("Saved.")
+    st.caption("Edits to existing prompts save automatically.")
