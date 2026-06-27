@@ -1,0 +1,23 @@
+{
+  "vestaboard": {
+    "backend": "cloud",
+    "cloud_key": "",
+    "local_endpoint": "",
+    "local_key": ""
+  },
+  "llm": {
+    "base_url": "https://api.openai.com/v1",
+    "model": "gpt-4o-mini",
+    "api_key": ""
+  },
+  "password_hash": "",
+  "prompts": [
+    {
+      "id": "morning-greeting",
+      "text": "Write an upbeat one-line good-morning message.",
+      "cron": "0 8 * * *",
+      "color_hints_enabled": true,
+      "enabled": true
+    }
+  ]
+}
