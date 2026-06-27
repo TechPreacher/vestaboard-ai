@@ -11,9 +11,15 @@ from vboard import logging_setup
 class PromptEntry(BaseModel):
     id: str
     text: str
+    title: str = ""
     cron: str
     color_hints_enabled: bool = True
     enabled: bool = True
+
+    @property
+    def display_title(self) -> str:
+        """Human-facing label: the title if set, else the prompt text."""
+        return self.title.strip() or self.text
 
 
 class VestaboardConfig(BaseModel):
@@ -27,6 +33,7 @@ class LLMConfig(BaseModel):
     base_url: str = ""
     model: str = ""
     api_key: str = ""
+    timeout_seconds: float = 60.0
 
 
 class AppConfig(BaseModel):
