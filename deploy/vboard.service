@@ -1,0 +1,19 @@
+# Docker Compose deployment (alternative to the bare-metal vboard-ui/vboard-scheduler units).
+# Starts both containers (UI + scheduler) on boot. Install:
+#   sudo cp deploy/vboard.service /etc/systemd/system/vboard.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now vboard.service
+[Unit]
+Description=Vestaboard AI (UI + scheduler) via Docker Compose
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/7d104f79c8624680859b88d6b18ae076/docker/vestaboard-ai
+ExecStart=/usr/bin/docker compose -f /home/7d104f79c8624680859b88d6b18ae076/docker/vestaboard-ai/compose.yml up --detach
+ExecStop=/usr/bin/docker compose -f /home/7d104f79c8624680859b88d6b18ae076/docker/vestaboard-ai/compose.yml stop
+
+[Install]
+WantedBy=multi-user.target
