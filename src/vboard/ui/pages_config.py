@@ -46,7 +46,8 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
     st.header("Prompts & Schedules")
 
     for i, p in enumerate(cfg.prompts):
-        with st.expander(f"{p.id}: {p.text[:30]}"):
+        summary = p.text if len(p.text) <= 120 else p.text[:120] + "…"
+        with st.expander(f"{p.id}: {summary}"):
             p.text = st.text_area("Prompt", value=p.text, key=f"text_{i}")
             p.cron = st.text_input("Cron (m h dom mon dow)", value=p.cron, key=f"cron_{i}")
             p.color_hints_enabled = st.checkbox("Color hints", value=p.color_hints_enabled,
