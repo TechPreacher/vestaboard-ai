@@ -89,6 +89,33 @@ The daemon picks up config changes within ~5 seconds — no restart needed.
 entirely through the UI. **Do not commit your real `config.json`; it holds secrets and is
 git-ignored.**
 
+## Run with Docker
+
+Both processes ship from a single image (multi-stage `uv` build, non-root user). `compose.yml`
+runs them as two services — `ui` and `scheduler` — sharing a named volume for `config.json`.
+
+```bash
+docker compose up -d --build
+```
+
+- The UI is published on **`127.0.0.1:8501`** only (put a reverse proxy in front for public TLS —
+  see [Deployment](#deployment); the proxy forwards to this same port).
+- Config lives on the `vboard-config` volume at `/data/config.json`, written by the UI and read by
+  the scheduler. No secrets are baked into the image.
+- First visit prompts you to set the admin password, exactly as in the local flow.
+
+```bash
+docker compose logs -f ui          # follow UI logs
+docker compose logs -f scheduler   # follow scheduler logs
+docker compose down                # stop (keeps the config volume)
+docker compose down -v             # stop and delete the config volume
+```
+
+To build the image without compose: `docker build -t vboard:local .`
+
+When fronting the containers with a reverse proxy, point it at `127.0.0.1:8501` just like the
+systemd setup below — the proxy config is identical.
+
 ## Development
 
 ```bash

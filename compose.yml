@@ -1,0 +1,61 @@
+# Two services from one image, sharing the config volume.
+# The UI edits config; the scheduler reads it and delivers on a cron schedule.
+# Put a TLS-terminating reverse proxy (Caddy/nginx) in front of the UI port — see README.
+
+services:
+  ui:
+    build: .
+    image: vboard:local
+    command:
+      - streamlit
+      - run
+      - src/vboard/ui/app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+      - --server.headless=true
+    # Bind to localhost only; the reverse proxy handles public TLS.
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - vboard-config:/data
+    environment:
+      VBOARD_CONFIG: /data/config.json
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=3).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  scheduler:
+    # Reuse the image built by the `ui` service — no second build.
+    image: vboard:local
+    command:
+      - python
+      - -m
+      - vboard.daemon
+    volumes:
+      - vboard-config:/data
+    environment:
+      VBOARD_CONFIG: /data/config.json
+    init: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      - ui
+
+volumes:
+  vboard-config:

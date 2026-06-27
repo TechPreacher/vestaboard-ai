@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Complete. Modules exist under `src/vboard/` (config, charset, vbml, llm, delivery, pipeline, daemon, ui); scheduler and UI are separate systemd services sharing a single config file; deploy artifacts (systemd units, container images) live in `deploy/`.
+Complete. Modules exist under `src/vboard/` (config, charset, vbml, llm, delivery, pipeline, daemon, ui); scheduler and UI are separate processes sharing a single config file. Run them as systemd services (units in `deploy/`) or as containers (`Dockerfile` + `compose.yml` at the repo root, two services sharing a `/data` config volume).
 
 ## What this is
 
@@ -61,6 +61,8 @@ Keep these as separable modules so backends/providers are swappable and testable
 - Lint: `uv run ruff check .`
 - Run UI locally: `VBOARD_CONFIG=./config.json uv run streamlit run src/vboard/ui/app.py`
 - Run scheduler daemon: `VBOARD_CONFIG=./config.json uv run python -m vboard.daemon`
+- Build + run both services in containers: `docker compose up -d --build` (UI on 127.0.0.1:8501, scheduler + UI share the `vboard-config` volume)
+- Build image only: `docker build -t vboard:local .`
 
 ## Verification
 
