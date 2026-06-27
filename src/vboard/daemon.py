@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import time
@@ -21,13 +22,17 @@ class Daemon:
         self.config_path = Path(config_path)
         self.scheduler = scheduler or BackgroundScheduler()
         self.runner = runner
-        self._last_mtime: float | None = None
+        self._last_signature: str | None = None
 
-    def _mtime(self) -> float | None:
+    def _signature(self) -> str | None:
+        # Hash the file contents rather than trusting st_mtime: filesystem mtime
+        # granularity (1s on some mounts) can hide an edit made in the same tick
+        # as the previous sync, which would otherwise be missed permanently.
         try:
-            return os.stat(self.config_path).st_mtime
+            data = self.config_path.read_bytes()
         except FileNotFoundError:
             return None
+        return hashlib.sha256(data).hexdigest()
 
     def sync_jobs(self) -> None:
         cfg = config.load_config(self.config_path)
@@ -40,12 +45,12 @@ class Daemon:
                 self._fire, trigger=cron_to_trigger(prompt.cron),
                 args=[prompt.id], id=prompt.id,
             )
-        self._last_mtime = self._mtime()
+        self._last_signature = self._signature()
         log.info("synced %d job(s)", len(self.scheduler.get_jobs()))
 
     def maybe_reload(self) -> bool:
-        current = self._mtime()
-        if current != self._last_mtime:
+        current = self._signature()
+        if current != self._last_signature:
             self.sync_jobs()
             return True
         return False
