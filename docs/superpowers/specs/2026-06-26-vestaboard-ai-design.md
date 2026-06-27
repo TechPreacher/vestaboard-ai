@@ -6,8 +6,9 @@
 ## Summary
 
 A Python backend + Streamlit UI that generates short messages with an OpenAI-compatible LLM and
-pushes them to a Vestaboard Note (6×22 grid, ~45 characters of content) on a cron schedule. Runs as
-two systemd services on a single host behind a TLS-terminating reverse proxy.
+pushes them to a Vestaboard Note (3 lines of 15 characters each, 45 characters of total content)
+on a cron schedule. Runs as two systemd services on a single host behind a TLS-terminating reverse
+proxy.
 
 ## Process model
 

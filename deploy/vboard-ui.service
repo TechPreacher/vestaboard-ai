@@ -1,0 +1,22 @@
+[Unit]
+Description=Vestaboard AI Streamlit UI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vboard
+Group=vboard
+WorkingDirectory=/opt/vboard
+Environment=VBOARD_CONFIG=/opt/vboard/config.json
+ExecStart=/opt/vboard/.venv/bin/streamlit run src/vboard/ui/app.py \
+  --server.address 127.0.0.1 --server.port 8501 --server.headless true
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/vboard
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
