@@ -40,7 +40,10 @@ def generate(
     url = cfg.base_url.rstrip("/") + "/chat/completions"
     headers = {"Authorization": f"Bearer {cfg.api_key}"}
     owns = client is None
-    client = client or httpx.Client(timeout=30.0)
+    # Connect should be quick; reads can be slow on some endpoints/models, so
+    # give the read leg the full configured budget.
+    timeout = httpx.Timeout(cfg.timeout_seconds, connect=10.0)
+    client = client or httpx.Client(timeout=timeout)
     try:
         resp = client.post(url, json=payload, headers=headers)
         if resp.status_code // 100 != 2:

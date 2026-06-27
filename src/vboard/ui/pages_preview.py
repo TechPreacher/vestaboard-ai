@@ -13,7 +13,11 @@ def render_preview(cfg: cfgmod.AppConfig, path: Path) -> None:
         st.info("No prompts configured yet.")
         return
 
-    labels = [f"{p.id}: {p.text[:30]}" for p in cfg.prompts]
+    def _label(p: cfgmod.PromptEntry) -> str:
+        text = p.text if len(p.text) <= 120 else p.text[:120] + "…"
+        return f"{p.id}: {text}"
+
+    labels = [_label(p) for p in cfg.prompts]
     idx = st.selectbox("Prompt", range(len(cfg.prompts)), format_func=lambda i: labels[i])
     prompt = cfg.prompts[idx]
 

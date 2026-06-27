@@ -27,6 +27,7 @@ class LLMConfig(BaseModel):
     base_url: str = ""
     model: str = ""
     api_key: str = ""
+    timeout_seconds: float = 60.0
 
 
 class AppConfig(BaseModel):

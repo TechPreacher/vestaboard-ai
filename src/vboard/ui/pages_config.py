@@ -20,6 +20,14 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
     base_url = st.text_input("Base URL", value=cfg.llm.base_url)
     model = st.text_input("Model", value=cfg.llm.model)
     api_key = st.text_input("API key", value=cfg.llm.api_key, type="password")
+    timeout_seconds = st.number_input(
+        "Request timeout (seconds)",
+        min_value=5.0,
+        max_value=600.0,
+        value=float(cfg.llm.timeout_seconds),
+        step=5.0,
+        help="How long to wait for the LLM to respond. Raise this if you see read timeouts.",
+    )
 
     if st.button("Save credentials"):
         cfg.vestaboard.backend = backend
@@ -29,6 +37,7 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
         cfg.llm.base_url = base_url
         cfg.llm.model = model
         cfg.llm.api_key = api_key
+        cfg.llm.timeout_seconds = timeout_seconds
         cfgmod.save_config(cfg, path)
         st.success("Saved.")
 
