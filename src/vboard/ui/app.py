@@ -13,6 +13,9 @@ from vboard.ui import pages_config, pages_history, pages_preview
 
 CONFIG_PATH = Path(os.environ.get("VBOARD_CONFIG", "config.json"))
 
+# Repo-root-relative so it resolves regardless of the process working directory.
+LOGO_PATH = Path(__file__).resolve().parents[3] / "assets" / "vestaboard.jpg"
+
 
 def _check_password(cfg: cfgmod.AppConfig) -> bool:
     """Returns True if authenticated. Renders login or first-run setup."""
@@ -46,6 +49,8 @@ def main() -> None:
     cfg = cfgmod.load_config(CONFIG_PATH)
     _check_password(cfg)
 
+    if LOGO_PATH.exists():
+        st.sidebar.image(str(LOGO_PATH), use_container_width=True)
     st.sidebar.title("Vestaboard AI")
     page = st.sidebar.radio(
         "Page",
