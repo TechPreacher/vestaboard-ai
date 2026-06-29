@@ -5,7 +5,7 @@ import bcrypt
 import streamlit as st
 
 from vboard import config as cfgmod
-from vboard.ui import pages_config, pages_preview
+from vboard.ui import pages_config, pages_history, pages_preview
 
 # WARNING: _check_password() is the SOLE authentication gate for this entire app.
 # Do NOT add a Streamlit pages/ directory — it would route around this gate and
@@ -47,15 +47,20 @@ def main() -> None:
     _check_password(cfg)
 
     st.sidebar.title("Vestaboard AI")
-    page = st.sidebar.radio("Page", ["Credentials", "Prompts & Schedules", "Preview / Test"])
+    page = st.sidebar.radio(
+        "Page",
+        ["Credentials", "Prompts & Schedules", "Preview / Test", "History"],
+    )
     cfg = cfgmod.load_config(CONFIG_PATH)  # reload fresh after auth
 
     if page == "Credentials":
         pages_config.render_credentials(cfg, CONFIG_PATH)
     elif page == "Prompts & Schedules":
         pages_config.render_prompts(cfg, CONFIG_PATH)
-    else:
+    elif page == "Preview / Test":
         pages_preview.render_preview(cfg, CONFIG_PATH)
+    else:
+        pages_history.render_history(CONFIG_PATH)
 
 
 main()

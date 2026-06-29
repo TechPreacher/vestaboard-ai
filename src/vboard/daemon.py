@@ -7,7 +7,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from vboard import config, logging_setup, pipeline
+from vboard import config, history, logging_setup, pipeline
 
 log = logging_setup.get_logger("vboard.daemon")
 
@@ -61,7 +61,34 @@ class Daemon:
         if prompt is None:
             log.warning("prompt id=%s no longer exists", prompt_id)
             return
-        self.runner(cfg, prompt)
+        result = self.runner(cfg, prompt)
+        # The runner swallows its own errors and returns a result; if we don't
+        # inspect it, delivery failures are completely invisible (APScheduler
+        # still reports "executed successfully" because _fire didn't raise).
+        if result is not None and not result.delivered:
+            log.error("delivery failed for prompt id=%s attempts=%d: %s",
+                      prompt_id, result.attempts, result.error)
+        elif result is not None and result.delivered:
+            self._record_history(prompt, result)
+
+    def _record_history(self, prompt: config.PromptEntry, result) -> None:
+        # Never let a history-write failure break the scheduled run: the message
+        # was already delivered to the board by this point.
+        try:
+            history.append(
+                history.history_path_for(self.config_path),
+                history.HistoryEntry(
+                    timestamp=history.now_iso(),
+                    prompt_id=prompt.id,
+                    prompt_title=prompt.display_title,
+                    text=result.text,
+                    truncated=result.truncated,
+                    grid=result.grid,
+                    device=result.device,
+                ),
+            )
+        except Exception as e:  # noqa: BLE001 - best-effort logging only
+            log.warning("could not record history for prompt id=%s: %s", prompt.id, e)
 
     def start(self) -> None:
         self.sync_jobs()

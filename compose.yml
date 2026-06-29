@@ -20,6 +20,9 @@ services:
       - vboard-config:/data
     environment:
       VBOARD_CONFIG: /data/config.json
+      # Cron schedules are interpreted in this timezone. Without it the
+      # container runs in UTC and "0 13" fires at 13:00 UTC, not local time.
+      TZ: Europe/Zurich
     init: true
     restart: unless-stopped
     security_opt:
@@ -48,6 +51,9 @@ services:
       - vboard-config:/data
     environment:
       VBOARD_CONFIG: /data/config.json
+      # Cron schedules are interpreted in this timezone. Without it the
+      # container runs in UTC and "0 13" fires at 13:00 UTC, not local time.
+      TZ: Europe/Zurich
     init: true
     restart: unless-stopped
     security_opt:

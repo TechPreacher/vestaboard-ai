@@ -40,3 +40,15 @@ def encode_text(text: str) -> list[int]:
         if code is not None:
             out.append(code)
     return out
+
+
+# Reverse map for rendering a grid back to readable text. Letters/digits/punct
+# decode to their glyph; color chips have no glyph, so they render as a block.
+_CODE_TO_CHAR: dict[int, str] = {code: ch for ch, code in _BASE.items()}
+for _code in COLOR_CODES.values():
+    _CODE_TO_CHAR[_code] = "█"
+
+
+def code_to_char(code: int) -> str:
+    """Decode a character code to its glyph. BLANK and unknown codes -> ' '."""
+    return _CODE_TO_CHAR.get(code, " ")

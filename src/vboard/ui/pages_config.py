@@ -3,12 +3,24 @@ from pathlib import Path
 import streamlit as st
 
 from vboard import config as cfgmod
+from vboard import device as devmod
+from vboard import llm
 
 
 def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
     st.header("Credentials")
 
     st.subheader("Vestaboard")
+    device_keys = list(devmod.DEVICES)
+    device = st.selectbox(
+        "Device",
+        device_keys,
+        index=device_keys.index(cfg.vestaboard.device)
+        if cfg.vestaboard.device in device_keys else device_keys.index(devmod.DEFAULT_DEVICE),
+        format_func=lambda k: devmod.DEVICES[k].label,
+        help="A full Vestaboard uses 6×22; a Vestaboard Note uses 3×15. "
+             "This sets message limits, layout, and how the LLM is briefed.",
+    )
     backend = st.selectbox("Backend", ["cloud", "local"],
                            index=0 if cfg.vestaboard.backend == "cloud" else 1)
     cloud_key = st.text_input("Cloud Read/Write key", value=cfg.vestaboard.cloud_key,
@@ -29,7 +41,18 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
         help="How long to wait for the LLM to respond. Raise this if you see read timeouts.",
     )
 
+    if st.button("Test connection"):
+        # Test exactly what's currently entered, so it can be checked before saving.
+        test_cfg = cfgmod.LLMConfig(
+            base_url=base_url, model=model, api_key=api_key,
+            timeout_seconds=timeout_seconds,
+        )
+        with st.spinner("Contacting the LLM endpoint…"):
+            ok, detail = llm.check_connection(test_cfg)
+        (st.success if ok else st.error)(detail)
+
     if st.button("Save credentials"):
+        cfg.vestaboard.device = device
         cfg.vestaboard.backend = backend
         cfg.vestaboard.cloud_key = cloud_key
         cfg.vestaboard.local_endpoint = local_endpoint

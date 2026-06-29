@@ -1,14 +1,14 @@
 import re
 from dataclasses import dataclass
 
-from vboard import charset
+from vboard import charset, device
 from vboard.charset import BLANK, COLOR_CODES
+from vboard.device import BOARD_COLS, BOARD_ROWS, DeviceSpec
 
-ROWS = 6
-COLS = 22
-CONTENT_LIMIT = 45
-NOTE_LINES = 3
-NOTE_COLS = 15
+# Board dimensions (the full grid always delivered to the API). Content
+# dimensions/limits are device-specific and come from a DeviceSpec.
+ROWS = BOARD_ROWS
+COLS = BOARD_COLS
 
 COLOR_RED = COLOR_CODES["red"]
 
@@ -37,14 +37,14 @@ def _blank_grid() -> list[list[int]]:
     return [[BLANK] * COLS for _ in range(ROWS)]
 
 
-def _split_lines(plain: str) -> list[str]:
-    """Greedy word-wrap into up to NOTE_LINES lines of <= NOTE_COLS chars."""
+def _split_lines(plain: str, cols: int) -> list[str]:
+    """Greedy word-wrap into lines of <= cols chars."""
     words = plain.split()
     lines: list[str] = []
     cur = ""
     for w in words:
         candidate = w if not cur else cur + " " + w
-        if len(candidate) <= NOTE_COLS:
+        if len(candidate) <= cols:
             cur = candidate
         else:
             if cur:
@@ -55,7 +55,12 @@ def _split_lines(plain: str) -> list[str]:
     return lines
 
 
-def compile(text: str, color_hints_enabled: bool) -> CompileResult:  # noqa: A001
+def compile(  # noqa: A001
+    text: str,
+    color_hints_enabled: bool,
+    dev: DeviceSpec | None = None,
+) -> CompileResult:
+    dev = dev or device.get(None)
     plain = strip_hints(text)
     # unsupported check (excluding spaces)
     for ch in plain:
@@ -63,43 +68,42 @@ def compile(text: str, color_hints_enabled: bool) -> CompileResult:  # noqa: A00
             return CompileResult("", _blank_grid(), content_length(text), False,
                                  f"unsupported character: {ch!r}")
     clen = content_length(text)
-    if clen > CONTENT_LIMIT:
+    if clen > dev.content_limit:
         return CompileResult("", _blank_grid(), clen, False,
-                             f"content {clen} exceeds 45 limit")
+                             f"content {clen} exceeds {dev.content_limit} limit")
 
-    lines = _split_lines(plain)
-    if len(lines) > NOTE_LINES:
+    lines = _split_lines(plain, dev.cols)
+    if len(lines) > dev.lines:
         return CompileResult("", _blank_grid(), clen, False,
-                             f"requires {len(lines)} lines, max {NOTE_LINES}")
-    for line in lines:
-        if len(line) > NOTE_COLS:
+                             f"requires {len(lines)} lines, max {dev.lines}")
+
+    # A color chip occupies a real cell, so it counts toward its line's width
+    # (a line with a chip holds one fewer text char than the device's cols).
+    chips = _chip_rows(text, dev) if color_hints_enabled else [None] * len(lines)
+    for i, line in enumerate(lines):
+        width = len(line) + (1 if chips[i] is not None else 0)
+        if width > dev.cols:
             return CompileResult("", _blank_grid(), clen, False,
-                                 f"line exceeds {NOTE_COLS} chars: {line!r}")
+                                 f"line exceeds {dev.cols} chars: {line!r}")
 
     grid = _blank_grid()
-    col_offset = (COLS - NOTE_COLS) // 2  # center 15 within 22
     for i, line in enumerate(lines):
         codes = charset.encode_text(line)
-        row = 1 + i  # rows 1..3
-        start = col_offset + (NOTE_COLS - len(codes)) // 2
+        if chips[i] is not None:
+            codes = [chips[i]] + codes  # chip leads its line, centered alongside it
+        row = dev.row_offset + i
+        start = dev.col_offset + (dev.cols - len(codes)) // 2
         for j, code in enumerate(codes):
             grid[row][start + j] = code
-
-    # color chips: place each chip at the row start of the line it precedes (v1 simple rule)
-    if color_hints_enabled:
-        chip_rows = _chip_rows(text)
-        for i, chip in enumerate(chip_rows):
-            if chip is not None and i < NOTE_LINES:
-                grid[1 + i][0] = chip
 
     vbml_str = strip_hints(text) if not color_hints_enabled else text
     return CompileResult(vbml_str, grid, clen, True, "")
 
 
-def _chip_rows(text: str) -> list[int | None]:
+def _chip_rows(text: str, dev: DeviceSpec) -> list[int | None]:
     """Map a leading {color} on each wrapped line to a chip code. v1: first hint -> line 0."""
     plain = strip_hints(text)
-    lines = _split_lines(plain)
+    lines = _split_lines(plain, dev.cols)
     result: list[int | None] = [None] * len(lines)
     first = _HINT_RE.search(text)
     if first and lines:
@@ -107,24 +111,51 @@ def _chip_rows(text: str) -> list[int | None]:
     return result
 
 
-def truncate_to_fit(text: str) -> str:
-    """Word-boundary truncate to fit 45 chars / 3 lines of <=15.
+def content_region(grid: list[list[int]], dev: DeviceSpec | None = None) -> list[list[int]]:
+    """Crop the full 6x22 board grid to the device's content area.
+
+    `compile` centers the device's `lines x cols` content within the physical
+    board; this extracts just that region so previews/history show exactly what
+    the device displays (3x15 for a Note, the full 6x22 for a Vestaboard).
+    """
+    dev = dev or device.get(None)
+    return [
+        row[dev.col_offset:dev.col_offset + dev.cols]
+        for row in grid[dev.row_offset:dev.row_offset + dev.lines]
+    ]
+
+
+def render_region(region: list[list[int]]) -> str:
+    """ASCII view of a content region: '.' for blanks, glyphs otherwise.
+
+    Reflects how the message looks on the board — uppercase letters/digits,
+    a block (█) for color chips, dots for empty cells.
+    """
+    return "\n".join(
+        "".join("." if c == BLANK else charset.code_to_char(c) for c in row)
+        for row in region
+    )
+
+
+def truncate_to_fit(text: str, dev: DeviceSpec | None = None) -> str:
+    """Word-boundary truncate to fit the device's lines/cols/content limit.
 
     Strips {color} hints; returns plain content only (last-resort path).
     """
+    dev = dev or device.get(None)
     plain = strip_hints(text)
     words = plain.split()
     out_words: list[str] = []
     for w in words:
-        if len(w) > NOTE_COLS:
+        if len(w) > dev.cols:
             break
         candidate = out_words + [w]
         joined = " ".join(candidate)
-        if content_length(joined) > CONTENT_LIMIT:
+        if content_length(joined) > dev.content_limit:
             break
-        if len(_split_lines(joined)) > NOTE_LINES:
+        if len(_split_lines(joined, dev.cols)) > dev.lines:
             break
-        if any(len(line) > NOTE_COLS for line in _split_lines(joined)):
+        if any(len(line) > dev.cols for line in _split_lines(joined, dev.cols)):
             break
         out_words = candidate
     return " ".join(out_words)

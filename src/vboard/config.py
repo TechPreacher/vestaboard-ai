@@ -27,6 +27,9 @@ class VestaboardConfig(BaseModel):
     cloud_key: str = ""
     local_endpoint: str = ""
     local_key: str = ""
+    # Which device the user owns: a full "vestaboard" (6x22) or a "note" (3x15).
+    # Drives content limits, layout, the LLM brief, and how previews/history render.
+    device: Literal["vestaboard", "note"] = "note"
 
 
 class LLMConfig(BaseModel):
