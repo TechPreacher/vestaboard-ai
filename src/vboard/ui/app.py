@@ -17,12 +17,27 @@ CONFIG_PATH = Path(os.environ.get("VBOARD_CONFIG", "config.json"))
 LOGO_PATH = Path(__file__).resolve().parents[3] / "assets" / "vestaboard.jpg"
 
 
+def _brand_header() -> None:
+    """Logo + title, shown on the login / first-run screens."""
+    if LOGO_PATH.exists():
+        # Center the logo by placing it in a wide middle column; it fills that
+        # column (≈67% of the page), so it reads bigger than a fixed width.
+        _, mid, _ = st.columns([1, 4, 1])
+        with mid:
+            st.image(str(LOGO_PATH), use_container_width=True)
+    st.markdown(
+        "<h1 style='text-align: center'>Vestaboard AI</h1>",
+        unsafe_allow_html=True,
+    )
+
+
 def _check_password(cfg: cfgmod.AppConfig) -> bool:
     """Returns True if authenticated. Renders login or first-run setup."""
     if "auth_ok" not in st.session_state:
         st.session_state.auth_ok = False
 
     if not cfg.password_hash:
+        _brand_header()
         st.warning("First run: set an admin password.")
         new = st.text_input("New password", type="password")
         if st.button("Set password") and new:
@@ -34,6 +49,7 @@ def _check_password(cfg: cfgmod.AppConfig) -> bool:
     if st.session_state.auth_ok:
         return True
 
+    _brand_header()
     pw = st.text_input("Password", type="password")
     if st.button("Log in"):
         if bcrypt.checkpw(pw.encode(), cfg.password_hash.encode()):
