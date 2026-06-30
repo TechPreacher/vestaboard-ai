@@ -1,0 +1,40 @@
+flowchart LR
+  classDef area fill:#ffffff00,stroke-dasharray: 5 5,stroke:#555,color:#000
+  classDef component stroke:#000,stroke-width:1px,fill:#ffffff00,color:#000
+  classDef out_of_scope stroke:#999,stroke-width:1px,fill:#ffffff00,color:#666
+
+  subgraph Internet
+    User(((Authenticated User)))
+    LLM(((OpenAI-compatible LLM Endpoint)))
+    VBAPI(((Vestaboard API)))
+    BOARD(((Vestaboard Device)))
+  end
+
+  subgraph Azure
+    UI(((Streamlit UI)))
+    DMN(((Scheduler Daemon)))
+    CFG[(config.json)]
+    HIST[(history.json)]
+  end
+
+  User -->|1| UI
+  UI -->|2| CFG
+  DMN -->|3| CFG
+  DMN -->|4| HIST
+  UI -->|5| HIST
+  DMN -->|6| LLM
+  DMN -->|7| VBAPI
+  UI -->|8| LLM
+  UI -->|9| VBAPI
+  VBAPI -->|10| BOARD
+
+  class Internet area
+  class Azure area
+  class User out_of_scope
+  class LLM out_of_scope
+  class VBAPI out_of_scope
+  class BOARD out_of_scope
+  class UI component
+  class DMN component
+  class CFG component
+  class HIST component
