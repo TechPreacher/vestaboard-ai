@@ -52,26 +52,39 @@ def run_once(
     if result is None or not result.valid:
         if not text:
             # Never got any text out of the LLM — nothing to fall back to.
-            return PipelineResult(False, text, False, attempts,
-                                  f"llm error: {llm_error}", device=dev.key)
+            return PipelineResult(
+                False, text, False, attempts, f"llm error: {llm_error}", device=dev.key
+            )
         text = vbml.truncate_to_fit(text, dev)
         result = vbml.compile(text, prompt.color_hints_enabled, dev)
         truncated = True
         if not result.valid:
-            return PipelineResult(False, text, truncated, attempts,
-                                  f"could not produce valid message: {result.reason}",
-                                  device=dev.key)
+            return PipelineResult(
+                False,
+                text,
+                truncated,
+                attempts,
+                f"could not produce valid message: {result.reason}",
+                device=dev.key,
+            )
 
     try:
         board = deliver_factory(cfg.vestaboard)
         board.send(result.grid)
     except delivery.DeliveryError as e:
-        return PipelineResult(False, text, truncated, attempts, f"delivery error: {e}",
-                              device=dev.key)
+        return PipelineResult(
+            False, text, truncated, attempts, f"delivery error: {e}", device=dev.key
+        )
     except NotImplementedError as e:
         return PipelineResult(False, text, truncated, attempts, str(e), device=dev.key)
 
-    log.info("delivered prompt id=%s device=%s attempts=%d truncated=%s",
-             prompt.id, dev.key, attempts, truncated)
-    return PipelineResult(True, text, truncated, attempts, "",
-                          vbml.content_region(result.grid, dev), dev.key)
+    log.info(
+        "delivered prompt id=%s device=%s attempts=%d truncated=%s",
+        prompt.id,
+        dev.key,
+        attempts,
+        truncated,
+    )
+    return PipelineResult(
+        True, text, truncated, attempts, "", vbml.content_region(result.grid, dev), dev.key
+    )

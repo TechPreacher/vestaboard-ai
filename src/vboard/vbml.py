@@ -65,17 +65,20 @@ def compile(  # noqa: A001
     # unsupported check (excluding spaces)
     for ch in plain:
         if ch != " " and not charset.is_supported(ch):
-            return CompileResult("", _blank_grid(), content_length(text), False,
-                                 f"unsupported character: {ch!r}")
+            return CompileResult(
+                "", _blank_grid(), content_length(text), False, f"unsupported character: {ch!r}"
+            )
     clen = content_length(text)
     if clen > dev.content_limit:
-        return CompileResult("", _blank_grid(), clen, False,
-                             f"content {clen} exceeds {dev.content_limit} limit")
+        return CompileResult(
+            "", _blank_grid(), clen, False, f"content {clen} exceeds {dev.content_limit} limit"
+        )
 
     lines = _split_lines(plain, dev.cols)
     if len(lines) > dev.lines:
-        return CompileResult("", _blank_grid(), clen, False,
-                             f"requires {len(lines)} lines, max {dev.lines}")
+        return CompileResult(
+            "", _blank_grid(), clen, False, f"requires {len(lines)} lines, max {dev.lines}"
+        )
 
     # A color chip occupies a real cell, so it counts toward its line's width
     # (a line with a chip holds one fewer text char than the device's cols).
@@ -83,8 +86,9 @@ def compile(  # noqa: A001
     for i, line in enumerate(lines):
         width = len(line) + (1 if chips[i] is not None else 0)
         if width > dev.cols:
-            return CompileResult("", _blank_grid(), clen, False,
-                                 f"line exceeds {dev.cols} chars: {line!r}")
+            return CompileResult(
+                "", _blank_grid(), clen, False, f"line exceeds {dev.cols} chars: {line!r}"
+            )
 
     grid = _blank_grid()
     for i, line in enumerate(lines):
@@ -120,8 +124,8 @@ def content_region(grid: list[list[int]], dev: DeviceSpec | None = None) -> list
     """
     dev = dev or device.get(None)
     return [
-        row[dev.col_offset:dev.col_offset + dev.cols]
-        for row in grid[dev.row_offset:dev.row_offset + dev.lines]
+        row[dev.col_offset : dev.col_offset + dev.cols]
+        for row in grid[dev.row_offset : dev.row_offset + dev.lines]
     ]
 
 
@@ -132,8 +136,7 @@ def render_region(region: list[list[int]]) -> str:
     a block (█) for color chips, dots for empty cells.
     """
     return "\n".join(
-        "".join("." if c == BLANK else charset.code_to_char(c) for c in row)
-        for row in region
+        "".join("." if c == BLANK else charset.code_to_char(c) for c in row) for row in region
     )
 
 

@@ -29,9 +29,7 @@ def render_history(path: Path) -> None:
         when = _format_when(entry.timestamp)
         label = devmod.get(entry.device).label
         flag = " · truncated" if entry.truncated else ""
-        st.markdown(
-            f"**{when}** — {title}  \n_{label} · prompt id: {entry.prompt_id}{flag}_"
-        )
+        st.markdown(f"**{when}** — {title}  \n_{label} · prompt id: {entry.prompt_id}{flag}_")
         # Render the stored region at its own size, so each entry shows the right
         # number of characters even if the device setting later changes.
         st.code(vbml.render_region(entry.grid))

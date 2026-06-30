@@ -11,8 +11,9 @@ def render_preview(cfg: cfgmod.AppConfig, path: Path) -> None:
     st.header("Preview / Test Send")
 
     dev = devmod.get(cfg.vestaboard.device)
-    st.caption(f"Device: {dev.label} — {dev.lines} lines × {dev.cols} chars "
-               f"({dev.content_limit} total)")
+    st.caption(
+        f"Device: {dev.label} — {dev.lines} lines × {dev.cols} chars ({dev.content_limit} total)"
+    )
 
     if not cfg.prompts:
         st.info("No prompts configured yet.")
@@ -30,8 +31,9 @@ def render_preview(cfg: cfgmod.AppConfig, path: Path) -> None:
     sample = st.text_area("Sample message to preview (skips LLM)", value="RAIN TODAY")
     if sample:
         result = vbml.compile(sample, prompt.color_hints_enabled, dev)
-        st.write(f"Content length: {result.content_len}/{dev.content_limit} "
-                 f"— valid: {result.valid}")
+        st.write(
+            f"Content length: {result.content_len}/{dev.content_limit} — valid: {result.valid}"
+        )
         if result.reason:
             st.warning(result.reason)
         # Show just the device's content area, with real glyphs and dots for

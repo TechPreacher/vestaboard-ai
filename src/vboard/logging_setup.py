@@ -19,7 +19,7 @@ class _RedactionFilter(logging.Filter):
     @staticmethod
     def _scrub(value: str) -> str:
         out = value
-        for secret in tuple(_SECRETS):   # snapshot: safe under concurrent register_secret
+        for secret in tuple(_SECRETS):  # snapshot: safe under concurrent register_secret
             if secret:
                 out = out.replace(secret, "***")
         return out

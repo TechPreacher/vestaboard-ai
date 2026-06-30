@@ -18,9 +18,7 @@ def test_system_prompt_reflects_device_dimensions():
 @respx.mock
 def test_generate_returns_message_content():
     respx.post("https://api.example/v1/chat/completions").mock(
-        return_value=httpx.Response(200, json={
-            "choices": [{"message": {"content": "RAIN TODAY"}}]
-        })
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "RAIN TODAY"}}]})
     )
     out = llm.generate(CFG, "weather")
     assert out == "RAIN TODAY"
@@ -29,9 +27,7 @@ def test_generate_returns_message_content():
 @respx.mock
 def test_generate_shorter_adds_instruction_and_still_parses():
     route = respx.post("https://api.example/v1/chat/completions").mock(
-        return_value=httpx.Response(200, json={
-            "choices": [{"message": {"content": "RAIN"}}]
-        })
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "RAIN"}}]})
     )
     out = llm.generate(CFG, "weather", shorter=True)
     assert out == "RAIN"
@@ -51,9 +47,7 @@ def test_generate_raises_on_error_status():
 @respx.mock
 def test_check_connection_success():
     respx.post("https://api.example/v1/chat/completions").mock(
-        return_value=httpx.Response(200, json={
-            "choices": [{"message": {"content": "pong"}}]
-        })
+        return_value=httpx.Response(200, json={"choices": [{"message": {"content": "pong"}}]})
     )
     ok, detail = llm.check_connection(CFG)
     assert ok is True
@@ -89,9 +83,9 @@ def test_check_connection_missing_config_is_reported():
 @respx.mock
 def test_check_connection_surfaces_provider_error_message():
     respx.post("https://api.example/v1/chat/completions").mock(
-        return_value=httpx.Response(400, json={
-            "error": {"message": "Unsupported value: 'temperature' does not support 0"}
-        })
+        return_value=httpx.Response(
+            400, json={"error": {"message": "Unsupported value: 'temperature' does not support 0"}}
+        )
     )
     ok, detail = llm.check_connection(CFG)
     assert ok is False
@@ -103,9 +97,7 @@ def test_check_connection_surfaces_provider_error_message():
 def test_generate_retries_without_temperature_on_400():
     route = respx.post("https://api.example/v1/chat/completions").mock(
         side_effect=[
-            httpx.Response(400, json={
-                "error": {"message": "temperature does not support 0.9"}
-            }),
+            httpx.Response(400, json={"error": {"message": "temperature does not support 0.9"}}),
             httpx.Response(200, json={"choices": [{"message": {"content": "OK"}}]}),
         ]
     )

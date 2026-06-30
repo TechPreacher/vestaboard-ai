@@ -17,10 +17,13 @@ def test_cron_to_trigger_parses_five_fields():
 
 def test_sync_jobs_adds_one_job_per_enabled_prompt(tmp_path: Path):
     path = tmp_path / "config.json"
-    _write(path, [
-        PromptEntry(id="a", text="x", cron="0 8 * * *", enabled=True),
-        PromptEntry(id="b", text="y", cron="0 9 * * *", enabled=False),
-    ])
+    _write(
+        path,
+        [
+            PromptEntry(id="a", text="x", cron="0 8 * * *", enabled=True),
+            PromptEntry(id="b", text="y", cron="0 9 * * *", enabled=False),
+        ],
+    )
     d = daemon.Daemon(path)
     d.sync_jobs()
     assert len(d.scheduler.get_jobs()) == 1
@@ -32,10 +35,13 @@ def test_maybe_reload_detects_change(tmp_path: Path):
     d = daemon.Daemon(path)
     d.sync_jobs()
     assert d.maybe_reload() is False  # no change yet
-    _write(path, [
-        PromptEntry(id="a", text="x", cron="0 8 * * *"),
-        PromptEntry(id="c", text="z", cron="0 10 * * *"),
-    ])
+    _write(
+        path,
+        [
+            PromptEntry(id="a", text="x", cron="0 8 * * *"),
+            PromptEntry(id="c", text="z", cron="0 10 * * *"),
+        ],
+    )
     assert d.maybe_reload() is True
     assert len(d.scheduler.get_jobs()) == 2
 
@@ -86,5 +92,7 @@ def test_fire_logs_when_delivery_fails(tmp_path: Path, caplog):
     d.sync_jobs()
     with caplog.at_level(logging.ERROR):
         d._fire("a")
-    assert any("delivery failed" in r.message or "delivery failed" in r.getMessage()
-               for r in caplog.records)
+    assert any(
+        "delivery failed" in r.message or "delivery failed" in r.getMessage()
+        for r in caplog.records
+    )

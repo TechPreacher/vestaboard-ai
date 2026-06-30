@@ -42,8 +42,10 @@ class Daemon:
             if not prompt.enabled:
                 continue
             self.scheduler.add_job(
-                self._fire, trigger=cron_to_trigger(prompt.cron),
-                args=[prompt.id], id=prompt.id,
+                self._fire,
+                trigger=cron_to_trigger(prompt.cron),
+                args=[prompt.id],
+                id=prompt.id,
             )
         self._last_signature = self._signature()
         log.info("synced %d job(s)", len(self.scheduler.get_jobs()))
@@ -66,8 +68,12 @@ class Daemon:
         # inspect it, delivery failures are completely invisible (APScheduler
         # still reports "executed successfully" because _fire didn't raise).
         if result is not None and not result.delivered:
-            log.error("delivery failed for prompt id=%s attempts=%d: %s",
-                      prompt_id, result.attempts, result.error)
+            log.error(
+                "delivery failed for prompt id=%s attempts=%d: %s",
+                prompt_id,
+                result.attempts,
+                result.error,
+            )
         elif result is not None and result.delivered:
             self._record_history(prompt, result)
 

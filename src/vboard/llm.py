@@ -86,8 +86,10 @@ def check_connection(
         try:
             resp.json()["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError, ValueError):
-            return True, (f"Reachable (HTTP {resp.status_code}), but the response "
-                          "shape was unexpected for an OpenAI-compatible endpoint.")
+            return True, (
+                f"Reachable (HTTP {resp.status_code}), but the response "
+                "shape was unexpected for an OpenAI-compatible endpoint."
+            )
         return True, f"Success — model {cfg.model!r} responded."
     except httpx.HTTPError as e:
         return False, f"Connection failed: {e}"

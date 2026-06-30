@@ -19,9 +19,7 @@ def test_cloudrw_send_posts_grid_with_key_header():
 
 @respx.mock
 def test_cloudrw_raises_on_error():
-    respx.post("https://rw.vestaboard.com/").mock(
-        return_value=httpx.Response(401, text="nope")
-    )
+    respx.post("https://rw.vestaboard.com/").mock(return_value=httpx.Response(401, text="nope"))
     try:
         delivery.CloudRW("rwkey").send(GRID)
         raise AssertionError("expected DeliveryError")

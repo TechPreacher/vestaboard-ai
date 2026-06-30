@@ -16,7 +16,8 @@ class FakeBoard:
 def test_first_attempt_valid_delivers():
     board = FakeBoard()
     r = pipeline.run_once(
-        CFG, PROMPT,
+        CFG,
+        PROMPT,
         generate=lambda cfg, p, shorter=False, dev=None: "RAIN TODAY",
         deliver_factory=lambda vcfg, client=None: board,
     )
@@ -46,7 +47,8 @@ def test_regenerates_when_first_too_long():
 def test_truncates_when_all_attempts_too_long():
     board = FakeBoard()
     r = pipeline.run_once(
-        CFG, PROMPT,
+        CFG,
+        PROMPT,
         generate=lambda cfg, p, shorter=False, dev=None: " ".join(["WORD"] * 30),
         deliver_factory=lambda v, client=None: board,
     )
@@ -63,7 +65,8 @@ def test_delivery_error_reported_not_raised():
             raise DeliveryError("down")
 
     r = pipeline.run_once(
-        CFG, PROMPT,
+        CFG,
+        PROMPT,
         generate=lambda cfg, p, shorter=False, dev=None: "OK",
         deliver_factory=lambda v, client=None: BadBoard(),
     )
@@ -117,7 +120,8 @@ def test_timeout_on_first_attempt_with_no_text_reports_error():
 def test_first_attempt_valid_delivers_records_device():
     board = FakeBoard()
     r = pipeline.run_once(
-        CFG, PROMPT,
+        CFG,
+        PROMPT,
         generate=lambda cfg, p, shorter=False, dev=None: "RAIN TODAY",
         deliver_factory=lambda vcfg, client=None: board,
     )
@@ -125,13 +129,15 @@ def test_first_attempt_valid_delivers_records_device():
 
 
 def test_vestaboard_device_uses_full_board_and_records_device():
-    cfg = AppConfig(vestaboard=VestaboardConfig(
-        backend="cloud", cloud_key="k", device="vestaboard"))
+    cfg = AppConfig(
+        vestaboard=VestaboardConfig(backend="cloud", cloud_key="k", device="vestaboard")
+    )
     board = FakeBoard()
     # Too long for a Note, but fits a full Vestaboard — must deliver, not truncate.
     long_msg = " ".join(["ALERT"] * 8)  # 40 content chars across several lines
     r = pipeline.run_once(
-        cfg, PROMPT,
+        cfg,
+        PROMPT,
         generate=lambda c, p, shorter=False, dev=None: long_msg,
         deliver_factory=lambda v, client=None: board,
     )
@@ -146,9 +152,7 @@ def test_vestaboard_device_uses_full_board_and_records_device():
 
 def test_local_backend_not_implemented_reported():
     cfg = AppConfig(
-        vestaboard=VestaboardConfig(
-            backend="local", local_endpoint="http://x", local_key="k"
-        )
+        vestaboard=VestaboardConfig(backend="local", local_endpoint="http://x", local_key="k")
     )
     prompt = PromptEntry(id="1", text="weather", cron="* * * * *")
     r = pipeline.run_once(cfg, prompt, generate=lambda c, p, shorter=False, dev=None: "RAIN TODAY")

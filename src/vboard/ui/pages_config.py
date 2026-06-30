@@ -16,15 +16,18 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
         "Device",
         device_keys,
         index=device_keys.index(cfg.vestaboard.device)
-        if cfg.vestaboard.device in device_keys else device_keys.index(devmod.DEFAULT_DEVICE),
+        if cfg.vestaboard.device in device_keys
+        else device_keys.index(devmod.DEFAULT_DEVICE),
         format_func=lambda k: devmod.DEVICES[k].label,
         help="A full Vestaboard uses 6×22; a Vestaboard Note uses 3×15. "
-             "This sets message limits, layout, and how the LLM is briefed.",
+        "This sets message limits, layout, and how the LLM is briefed.",
     )
-    backend = st.selectbox("Backend", ["cloud", "local"],
-                           index=0 if cfg.vestaboard.backend == "cloud" else 1)
-    cloud_key = st.text_input("Cloud Read/Write key", value=cfg.vestaboard.cloud_key,
-                              type="password")
+    backend = st.selectbox(
+        "Backend", ["cloud", "local"], index=0 if cfg.vestaboard.backend == "cloud" else 1
+    )
+    cloud_key = st.text_input(
+        "Cloud Read/Write key", value=cfg.vestaboard.cloud_key, type="password"
+    )
     local_endpoint = st.text_input("Local endpoint", value=cfg.vestaboard.local_endpoint)
     local_key = st.text_input("Local key", value=cfg.vestaboard.local_key, type="password")
 
@@ -44,7 +47,9 @@ def render_credentials(cfg: cfgmod.AppConfig, path: Path) -> None:
     if st.button("Test connection"):
         # Test exactly what's currently entered, so it can be checked before saving.
         test_cfg = cfgmod.LLMConfig(
-            base_url=base_url, model=model, api_key=api_key,
+            base_url=base_url,
+            model=model,
+            api_key=api_key,
             timeout_seconds=timeout_seconds,
         )
         with st.spinner("Contacting the LLM endpoint…"):
@@ -77,11 +82,14 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
         with st.expander(f"{p.id}: {summary}"):
             p.title = st.text_input(
                 "Title (shown in lists; defaults to the prompt text)",
-                value=p.title, key=f"title_{i}")
+                value=p.title,
+                key=f"title_{i}",
+            )
             p.text = st.text_area("Prompt", value=p.text, key=f"text_{i}")
             p.cron = st.text_input("Cron (m h dom mon dow)", value=p.cron, key=f"cron_{i}")
-            p.color_hints_enabled = st.checkbox("Color hints", value=p.color_hints_enabled,
-                                                key=f"hints_{i}")
+            p.color_hints_enabled = st.checkbox(
+                "Color hints", value=p.color_hints_enabled, key=f"hints_{i}"
+            )
             p.enabled = st.checkbox("Enabled", value=p.enabled, key=f"en_{i}")
             if st.button("Delete", key=f"del_{i}"):
                 cfg.prompts.pop(i)
@@ -102,7 +110,8 @@ def render_prompts(cfg: cfgmod.AppConfig, path: Path) -> None:
     if st.button("Add"):
         if new_id and new_text:
             cfg.prompts.append(
-                cfgmod.PromptEntry(id=new_id, title=new_title, text=new_text, cron=new_cron))
+                cfgmod.PromptEntry(id=new_id, title=new_title, text=new_text, cron=new_cron)
+            )
             cfgmod.save_config(cfg, path)
             st.rerun()
 
